@@ -78,7 +78,7 @@ function DiaryStore() {
         if (data.data.accessToken) accessToken = data.data.accessToken;
         const initData = data.data.data;
         dispatch({ type: INIT, data: initData });
-    });
+      });
   }
 
   useEffect(() => {
@@ -91,8 +91,6 @@ function DiaryStore() {
       data: { title, content, write_date, hashtags, id: dataId.current },
     });
     console.log('--------🚨 Store의 data-------- :', data);
-    // console.log('--------🦭 Store의 Content-------- :', content);
-    // console.log('--------🦭 Store의 Hashtags-------- :', hashtags);
     dataId.current += 1;
     console.log('DiaryStore dataId 확인 :', dataId.current);
   });

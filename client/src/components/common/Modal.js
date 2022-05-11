@@ -17,7 +17,7 @@ const ModalContainer = styled.div`
   height: 15px;
   /* height: 15rem; */
   text-align: center;
-  margin: 120px auto;
+  margin: 20px auto;
 `;
 
 const ModalBtn = styled.button`
@@ -25,7 +25,7 @@ const ModalBtn = styled.button`
   text-decoration: none;
   border: none;
   font-size: 30px;
-  padding: 20px;
+  padding: 10px;
   color: black;
   border-radius: 30px;
   cursor: grab;
