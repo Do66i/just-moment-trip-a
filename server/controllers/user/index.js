@@ -1,114 +1,86 @@
-const { user } = require("../../models");
+const { user, trip } = require("../../models");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const tokenHandler = require("../tokenHandler");
+const slack = require("../slack");
 
 module.exports = {
-  signup: {
-    post: async (req, res) => {
-      try {
-        // 정보 불충분
-        const { user_id, password } = req.body;
-        if (!user_id || !password) {
-          res.status(422).send("insufficient parameters supplied");
-        }
+  get: async (req, res) => {
+    try {
+      const validity = await tokenHandler.accessTokenVerify(req, res);
+      if (validity) {
+        const { id, email, accessToken } = validity;
         const userInfo = await user.findOne({
-          where: {
-            user_id: req.body.user_id,
-            password: req.body.password,
-          },
+          include: { model: trip, attributes: ["user_id"] },
+          where: { id, email },
         });
-
-        //이미 가입되었을 경우
-
-        if (userInfo) {
-          res.status(400).send({ data: null, message: "email already exists" });
-        }
-
-        //가입이 되지 않았을 경우
-        else {
-          const payload = {
-            userInfo: {
-              user_id: req.body.user_id,
-              password: req.body.password,
-            },
-            message: "Successfully Sign Up",
-          };
-
-          await user.create(payload.userInfo);
-          res.status(201).send(payload);
-        }
-      } catch (err) {
-        res.status(500).send("Server Error Code 500/ in singup");
+        const num_trips = userInfo.trips.length;
+        const data = {
+          email,
+          picture: userInfo.picture,
+          nickname: userInfo.nickname,
+          num_trips,
+        };
+        await slack.slack("User Get 200", `id : ${id}`);
+        res.status(200).send({ data, accessToken });
       }
-    },
+    } catch (err) {
+      await slack.slack("User Get 501");
+      res.status(501).send("User Get");
+    }
   },
+  patch: async (req, res) => {
+    //patch 하나만 바꾸는거고 put은 모든거 지정(지정안한거 null됨)
+    try {
+      const validity = await tokenHandler.accessTokenVerify(req, res);
+      if (validity) {
+        if (req.body.picture && !req.body.email) {
+          const userInfo = await user.findOne({
+            where: { id: validity.id, email: validity.email },
+          });
+          userInfo.picture = req.body.picture;
+          await userInfo.save();
+          return res
+            .status(200)
+            .send({ data: { id: userInfo.id }, accessToken: validity.accessToken });
+        }
 
-  signin: {
-    post: async (req, res) => {
-      try {
-        console.log('dkpkfdpmwefpmfwmpwfpmfewpmkwef');
         const userInfo = await user.findOne({
           where: {
-            user_id: req.body.user_id,
+            email: req.body.email,
             password: req.body.password,
           },
         });
-
-        //데이터베이스에 회원정보가 없을 경우
         if (!userInfo) {
-          res.status(400).send({ data: null, message: "Wrong email or password" });
-        }
-        //데이터 베이스에 회원정보가 있을 경우
-        else {
-          const payload = {
-            id: userInfo.id,
-            user_id: userInfo.user_id,
-            password: userInfo.password,
-          };
-          const accessToken = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: "1d" });
-          const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: "7d" });
-          res.cookie("refreshToken", refreshToken, {
-            sameSite: "none",
-            httpOnly: true,
-            secure: true,
-          });
-
-          res.status(200).send({
-            data: { accessToken: accessToken },
-            message: `${req.body.user_id}님 로그인을 환영합니다.`,
+          await slack.slack("User Patch 404", `id : ${validity.id}`);
+          res.status(404).send({
+            data: { id: validity.id },
+            message: "No User",
           });
         }
-      } catch (err) {
-        res.status(500).send("Server Error Code 500");
+        await user.update({ password: req.body.new_password }, { where: { id: userInfo.id } });
+        await slack.slack("User Patch 200", `id : ${userInfo.id}`);
+        res.status(200).send({ data: { id: userInfo.id }, accessToken: validity.accessToken });
       }
-    },
+    } catch (err) {
+      await slack.slack("User Patch 501");
+      res.status(501).send("User Patch");
+    }
   },
-  signout: {
-    post: async (req, res) => {
-      try {
-        const validity = tokenHandler.accessTokenVerify(req);
-        if (validity) {
-          res.status(200).send("Successfully Sign Out");
-        }
-      } catch (err) {
-        res.status(500).send("Server Error Code 500");
+  delete: async (req, res) => {
+    try {
+      const validity = await tokenHandler.accessTokenVerify(req, res);
+      console.log(validity);
+      if (validity) {
+        await user.destroy({
+          where: { id: validity.id },
+        });
+        await slack.slack("User Delete 200", `id : ${validity.id}`);
+        res.status(200).send({ data: validity.id });
       }
-    },
-  },
-  withdrawal: {
-    delete: async (req, res) => {
-      try {
-        const validity = tokenHandler.accessTokenVerify(req);
-        if (validity) {
-          await user.destroy({
-            where: { id: validity.id },
-          });
-          res.status(200).json("Successfully User Deleted");
-        }
-      } catch (err) {
-        res.status(500).send("Server Error Code 500");
-      }
-    },
+    } catch (err) {
+      await slack.slack("User Delete 501");
+      res.status(501).send("User Delete");
+    }
   },
 };

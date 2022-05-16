@@ -3,5 +3,7 @@ module.exports = {
   plugins: [
     'babel-plugin-styled-components',
     '@babel/plugin-transform-runtime',
+    '@emotion',
+    'macros',
   ],
 };

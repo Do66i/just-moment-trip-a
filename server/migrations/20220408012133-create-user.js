@@ -10,12 +10,21 @@ module.exports = {
           primaryKey: true,
           type: Sequelize.INTEGER,
         },
-        user_id: {
+        email: {
+          allowNull: false,
+          type: Sequelize.STRING,
+        },
+        nickname: {
           allowNull: false,
           type: Sequelize.STRING,
         },
         password: {
           allowNull: false,
+          type: Sequelize.STRING,
+        },
+        picture: {
+          defaultValue: "profile.jpeg",
+          allowNull: true,
           type: Sequelize.STRING,
         },
         createdAt: {
