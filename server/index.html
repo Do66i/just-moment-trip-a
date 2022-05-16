@@ -2,14 +2,14 @@
   <head>
     <meta charset="utf-8" />
     <title>채팅방</title>
-    <link
-      rel="stylesheet"
-      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-    />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
   </head>
   <body>
     <div class="container">
-      <h3>채팅방</h3>
+      <div style="align-items: center">
+        <h3>채팅방</h3>
+      </div>
+
       <form class="form-inline">
         <div class="form-group">
           <label for="msgForm">Message: </label>
@@ -40,15 +40,11 @@
 
         // 서버로부터의 메시지가 수신되면
         socket.on("s2c chat", function (data) {
-          $("#chatLogs").append(
-            "<div>" + data.from.name + " : <strong>" + data.msg + "</strong></div>"
-          );
+          $("#chatLogs").append("<div>" + data.from.name + " : <strong>" + data.msg + "</strong></div>");
         });
 
         socket.on("disconnect", function (data) {
-          $("#chatLogs").append(
-            "<div><strong>" + "data" + "</strong>님이 로그아웃 하셨습니다.</div>"
-          );
+          $("#chatLogs").append("<div><strong>" + "data" + "</strong>님이 로그아웃 하셨습니다.</div>");
         });
 
         // Send 버튼이 클릭되면
